@@ -1,0 +1,50 @@
+# Name of your GitHub Actions workflow.
+name: Create Release
+
+# This workflow is triggered when a new tag is pushed.
+on:
+  push:
+    tags:
+      - 'v*' # This pattern triggers the workflow for tags like v1.0, v2.1.1, etc.
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel.
+jobs:
+  # This workflow contains a single job called "release".
+  release:
+    # The type of runner that the job will run on.
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job.
+    steps:
+      # Step 1: Check out your repository's code so the workflow can access it.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Docker Buildx. (Identical to your CI workflow)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 3: Build the Docker image from your Dockerfile. (Identical to your CI workflow)
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          tags: embedded-gcc:latest
+          push: false
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Step 4: Compile the project to produce the .bin file. (Identical to your CI workflow)
+      - name: Compile the project
+        run: |
+          docker run --rm -v ${{ github.workspace }}/steps/step-0-minimal:/src embedded-gcc sh -c "make clean && make -j$(nproc)"
+
+      # Step 5: Create a GitHub Release and upload the firmware.bin as an asset.
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # This specifies the files to upload as release assets.
+          # You can use wildcards to upload multiple files.
+          files: steps/step-0-minimal/firmware.bin
