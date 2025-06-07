@@ -50,4 +50,4 @@ jobs:
       # Step 4: Run the build command inside the newly created container.
       - name: Compile the project
         run: |
-          docker run --rm -v ${{ github.workspace }}:/src embedded-gcc sh -c "make clean && make -j$(nproc)"
+          docker run --rm -v ${{ github.workspace }}/steps/step-0-minimal:/src embedded-gcc sh -c "make clean && make -j$(nproc)"
