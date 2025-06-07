@@ -1,0 +1,53 @@
+# Name of your GitHub Actions workflow.
+name: C/C++ CI
+
+# Controls when the workflow will run.
+on:
+  # Triggers the workflow on push events for the "main" branch.
+  push:
+    branches: [ "docker" ]
+  # Triggers the workflow on pull requests targeting the "main" branch.
+  pull_request:
+    branches: [ "docker" ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel.
+jobs:
+  # This workflow contains a single job called "build".
+  build:
+    # The type of runner that the job will run on.
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job.
+    steps:
+      # Step 1: Check out your repository's code so the workflow can access it.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Docker Buildx, a modern and feature-rich builder.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 3: Build the Docker image from your Dockerfile.
+      # This step uses the official docker/build-push-action.
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          # Define the build context as the root of the repository.
+          context: .
+          # Point to your Dockerfile.
+          file: ./Dockerfile
+          # Tag the image so we can reference it in the next step.
+          tags: embedded-gcc:latest
+          # We don't need to push the image to a registry for this use case.
+          push: false
+          # CRITICAL: This loads the built image into the local Docker daemon
+          # on the runner, making it available for the next step.
+          load: true
+          # Enable caching to speed up future builds by reusing unchanged layers.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Step 4: Run the build command inside the newly created container.
+      - name: Compile the project
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/src embedded-gcc sh -c "make clean && make -j$(nproc)"
