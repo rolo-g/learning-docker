@@ -1,0 +1,7 @@
+{
+    "editor.tokenColorCustomizations": {
+        "comments": "",
+        "textMateRules": []
+    },
+    "makefile.makefilePath": "/home/rolo/Projects/bare-metal-programming-guide/steps/step-0-minimal/Makefile"
+}
